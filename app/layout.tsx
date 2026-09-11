@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import FeedbackButton from "@/components/common/feedback-button"
 import { BackgroundBlobs } from "@/components/layout/background-blobs"
+import WebsiteVisitorTracker from "@/components/analytics/website-visitor-tracker"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -54,6 +55,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <BackgroundBlobs />
+          <WebsiteVisitorTracker />
           {/* Yapımcı GitHub:KeremKuyucu */}
           {children}
           <FeedbackButton />
