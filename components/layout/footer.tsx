@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Heart, Github, Mail, Globe } from 'lucide-react';
 
 const Footer = () => {
-    const contactEmail = "contact@keremkk.com.tr";
+    const contactEmail = "contact@keremkuyucu.com.tr";
 
     return (
         <footer className="mt-20 border-t border-indigo-100/50 dark:border-indigo-900/30 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-slate-950/50 backdrop-blur-xl">
@@ -29,7 +29,7 @@ const Footer = () => {
                     {/* Sağ - Geliştirici Kartı & Sosyal Medya */}
                     <div className="flex flex-col gap-4 items-end">
                         <Link
-                            href="https://keremkk.com.tr"
+                            href="https://keremkuyucu.com.tr"
                             target="_blank"
                             rel="noopener noreferrer"
                             prefetch={false}

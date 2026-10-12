@@ -135,7 +135,7 @@ async function sendReminderEmail(
     const { data, error } = await sendWithRetry(
       () =>
         resend.emails.send({
-          from: "EGL Yıllık <egl@keremkk.com.tr>",
+          from: "EGL Yıllık <egl@keremkuyucu.com.tr>",
           to: [email],
           subject,
           text: `

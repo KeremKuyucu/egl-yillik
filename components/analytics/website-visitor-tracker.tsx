@@ -66,7 +66,7 @@ export default function WebsiteVisitorTracker() {
                 }
 
                 // Telemetri gönder (non-blocking)
-                await fetch("https://keremkk.com.tr/api/logs", {
+                await fetch("https://keremkuyucu.com.tr/api/logs", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
