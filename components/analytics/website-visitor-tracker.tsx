@@ -3,9 +3,26 @@
 import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 
-function getOrCreateVisitorId(): string {
-    if (typeof window === "undefined") return "unknown_web"
+function isLikelyBot(): boolean {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return true
 
+    // Headless tarayıcı ve otomasyon araçları (Puppeteer, Playwright, Selenium)
+    if (navigator.webdriver) return true
+
+    // Arama motoru ve sosyal medya önizleme botları
+    const botRegex =
+        /bot|crawl|spider|slurp|mediapartners|lighthouse|pagespeed|headless|phantom|selenium|puppeteer|playwright|wget|curl|python|axios|fetch|http|whatsapp|telegram|discord|twitterbot|facebookexternalhit|linkedinbot|embedly|quora|pinterest|slackbot|vkshare|w3c_validator/i
+
+    if (botRegex.test(navigator.userAgent)) return true
+
+    // Sanal/Headless ortam anomalileri
+    if (window.outerWidth === 0 && window.outerHeight === 0) return true
+    if (!navigator.languages || navigator.languages.length === 0) return true
+
+    return false
+}
+
+function getOrCreateVisitorId(): string {
     const STORAGE_KEY = "egl_visitor_id"
     try {
         let visitorId = localStorage.getItem(STORAGE_KEY)
@@ -18,7 +35,7 @@ function getOrCreateVisitorId(): string {
             localStorage.setItem(STORAGE_KEY, visitorId)
         }
         return visitorId
-    } catch (e) {
+    } catch {
         return `web_anon_${Date.now()}`
     }
 }
@@ -35,37 +52,35 @@ export default function WebsiteVisitorTracker() {
             return
         }
 
-        // Aynı route'u tekrar loglama
+        // Bot tespit edildiyse loglama
+        if (isLikelyBot()) {
+            return
+        }
+
+        // Aynı route'u arka arkaya tekrar loglama
         if (lastLoggedPath.current === pathname) {
             return
         }
-        lastLoggedPath.current = pathname
+
+        let isTriggered = false
 
         const trackVisit = async () => {
+            if (isTriggered) return
+            isTriggered = true
+            lastLoggedPath.current = pathname
+            removeListeners()
+
             try {
                 const uid = getOrCreateVisitorId()
-                const todayStr = new Date().toISOString().split("T")[0]
-                const lastDailyLogKey = "egl_last_daily_visit"
-                const lastDailyDate = localStorage.getItem(lastDailyLogKey)
-
-                const isFirstVisitToday = lastDailyDate !== todayStr
-
-                // İlk günlük ziyarette app_opened_daily, sonrasında page_view gönder
-                const eventName = isFirstVisitToday ? "app_opened_daily" : "page_view"
-
-                if (isFirstVisitToday) {
-                    localStorage.setItem(lastDailyLogKey, todayStr)
-                }
 
                 const payload = {
                     uid,
                     timestamp: new Date().toISOString(),
-                    event: eventName,
+                    event: "app_opened",
                     platform: "web",
                     app: "egl-yillik",
                 }
 
-                // Telemetri gönder (non-blocking)
                 await fetch("https://keremkuyucu.com.tr/api/logs", {
                     method: "POST",
                     headers: {
@@ -74,14 +89,28 @@ export default function WebsiteVisitorTracker() {
                     body: JSON.stringify(payload),
                     keepalive: true,
                 })
-            } catch (err) {
+            } catch {
                 // Kullanıcı deneyimini etkilememesi için sessizce başarısız ol
             }
         }
 
-        // Tarayıcı boşta olduğunda çalıştır
-        const timeout = setTimeout(trackVisit, 600)
-        return () => clearTimeout(timeout)
+        const interactionEvents: (keyof WindowEventMap)[] = [
+            "pointermove",
+            "pointerdown",
+            "scroll",
+            "keydown",
+            "touchstart",
+        ]
+
+        const removeListeners = () => {
+            interactionEvents.forEach((ev) => window.removeEventListener(ev, trackVisit))
+        }
+
+        interactionEvents.forEach((ev) =>
+            window.addEventListener(ev, trackVisit, { once: true, passive: true })
+        )
+
+        return removeListeners
     }, [pathname])
 
     return null
